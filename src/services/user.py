@@ -1,11 +1,11 @@
 from abc import ABC
-from typing import Any, Generic, Optional, Type, TypeVar, Union, Annotated
+from typing import Any, Generic, Optional, Type, TypeVar
 from fastapi.encoders import jsonable_encoder
 from fastapi import Depends
-from fastapi import Request as ClientRequest, HTTPException
+from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select
 from fastapi.security import OAuth2PasswordBearer
 from starlette import status
 from jose import JWTError, jwt

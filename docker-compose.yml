@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+
+  postgres-fastapi:
+    image: postgres:14.5
+    expose:
+      - ${POSTGRES_EXPOSE}
+    restart: always
+    env_file:
+      - ./.env
+
+  backend:
+    build: .
+    command: sh -c "${COMMANDS_BEFORE_START_BACK}"
+    ports:
+      - ${PROJECT_PORT}:${PROJECT_PORT}
+    volumes:
+      - ./src/files:/code/src/files/
+    env_file:
+      - ./.env
+    restart: always
+    depends_on:
+      - postgres-fastapi
+
+  nginx:
+    image: nginx:1.19.3
+    ports:
+      - ${NGINX_PORT}:${NGINX_PORT}
+    volumes:
+      - ./services/nginx.conf:/etc/nginx/conf.d/site.conf.template
+      - ./src/files:/code/src/files/
+    command: sh -c "${COMMANDS_BEFORE_START_NGINX}"
+    restart: always
+    env_file:
+      - ./.env
+
+    depends_on:
+      - backend

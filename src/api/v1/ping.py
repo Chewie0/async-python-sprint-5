@@ -12,14 +12,14 @@ from src.db.db import get_session
 ping_db_router = APIRouter()
 
 
-@ping_db_router.get("/ping")
+@ping_db_router.get("/")
 async def ping(session: AsyncSession = Depends(get_session)):
     start_time: float = time.time()
     try:
         logger.info(f'Ping database')
         await session.execute(text("SELECT 1"))
         total_time: float = round(time.time() - start_time, 2) * 1000
-        return JSONResponse(status_code=status.HTTP_200_OK, content={'details': 'Database connection is ok', "ping": f'{total_time}ms'})
+        return JSONResponse(status_code=status.HTTP_200_OK, content={"db": f'{total_time}'})
     except OperationalError:
         logger.error(f'Ping database err')
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={'details': 'Error database connection'})

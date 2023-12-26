@@ -24,9 +24,3 @@ class File(Base):
     size = Column(Integer, nullable=False)
     is_downloadable = Column(Boolean, default=False)
     created_at = Column(DateTime, index=True, default=datetime.utcnow)
-
-
-class Directory(Base):
-    __tablename__ = 'directories'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    path = Column(String(255), nullable=False, unique=True)

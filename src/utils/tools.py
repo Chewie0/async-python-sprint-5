@@ -6,23 +6,18 @@ import zipfile
 from os.path import basename
 import py7zr
 from datetime import datetime, timedelta
-from io import BytesIO
-from typing import Annotated, Callable
+from typing import Callable
 from aioshutil import copyfileobj
 from fastapi import File as FileObj
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel
 
-from src.schemes.user_schemes import TokenData, UserAuth
 from src.core import settings
 from src.core.logger import logger
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
 
 
 def verify_password(plain_password, hashed_password):
@@ -31,6 +26,7 @@ def verify_password(plain_password, hashed_password):
 
 def get_password_hash(password):
     return pwd_context.hash(password)
+
 
 def create_access_token(id_: str):
     expire = datetime.utcnow() + timedelta(
@@ -46,15 +42,15 @@ async def write_file(file_obj: FileObj, full_file_path: str):
         await copyfileobj(file_obj.file, file)
 
 
-
 def add_to_arch(write_to_arch: Callable, full_path: str) -> None:
     if os.path.isfile(full_path):
         logger.info(f'Add to archive file {full_path}')
+        write_to_arch(full_path, basename(full_path))
     else:
         logger.info(f'Add to archive folder {full_path}')
         for dirpath, dirnames, filenames in os.walk(full_path):
             for filename in filenames:
-                filepath = os.path.join(dirpath, filename)
+                filepath = os.path.join(settings.files_folder_name, dirpath.split(settings.files_folder_name)[1][1:], filename)
                 write_to_arch(filepath)
 
 

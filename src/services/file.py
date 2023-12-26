@@ -1,20 +1,14 @@
 from abc import ABC
 import os
-from io import BytesIO
 from pathlib import Path
-from typing import Any, Generic, Optional, Type, TypeVar, Union, Annotated
-from fastapi.encoders import jsonable_encoder
-from fastapi import Depends
-from fastapi import Request as ClientRequest, HTTPException
-from pydantic import BaseModel
+from typing import Any, Generic, Optional, Type, TypeVar
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import File as FileObj
-from sqlalchemy import select, func
-from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from starlette import status
-from jose import JWTError, jwt
 
-from src.db.db import Base, get_session
+from src.db.db import Base
 from src.core import settings
 from src.schemes import file_schemes
 from src.utils.tools import write_file, archive_file
@@ -22,16 +16,19 @@ from src.core.logger import logger
 
 
 class Repository(ABC):
-    def get_file_info_by_path(self, *args, **kwargs):
+    def create_file(self, *args, **kwargs):
         raise NotImplementedError
 
-    def get_file_info_by_id(self, *args, **kwargs):
+    def get_list_files(self, *args, **kwargs):
         raise NotImplementedError
 
-    def get_list_by_user_object(self, *args, **kwargs):
+    def get_file_by_path(self, *args, **kwargs):
         raise NotImplementedError
 
-    def create_or_put_file(self, *args, **kwargs):
+    def get_path_of_file(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def get_compression_file(self, *args, **kwargs):
         raise NotImplementedError
 
 
@@ -74,11 +71,11 @@ class RepositoryFileDB(Repository, Generic[ModelType]):
 
     async def get_file_by_path(self, db: AsyncSession, path: str) -> ModelType | None:
         if path.startswith('/'):
-            logger.info(f'Get path of file {path}')
             statement = select(self._model).where(self._model.path == os.path.normpath(path[1:]))
+            logger.info(f'Get path of file {os.path.normpath(path[1:])}')
         else:
-            logger.info(f'Get id file {path}')
             statement = select(self._model).where(self._model.id == path)
+            logger.info(f'Get id file {path}')
         files = await db.execute(statement=statement)
         result = files.scalar_one_or_none()
         return result
@@ -100,6 +97,7 @@ class RepositoryFileDB(Repository, Generic[ModelType]):
 
 
     async def get_compression_file(self, db: AsyncSession, path: str, compression_type: str) -> Any:
+        logger.info(f'Trying get file to compression {path}')
         if compression_type not in settings.compression_types:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -108,7 +106,7 @@ class RepositoryFileDB(Repository, Generic[ModelType]):
 
         file_obj = await self.get_file_by_path(db=db, path=path)
         if not file_obj:
-            print('not file obj')
+            logger.info('No such file_obj in db')
             if path.startswith('/'):
                 path = path[1:]
             full_path = os.path.join(settings.files_folder, os.path.normpath(path))
@@ -121,8 +119,8 @@ class RepositoryFileDB(Repository, Generic[ModelType]):
             if path == str(file_obj.id):
                 full_path = os.path.join(settings.files_folder, file_obj.path)
             else:
-                full_path = os.path.join(settings.files_folder, path)
-        print(full_path)
+                full_path = os.path.join(settings.files_folder, os.path.normpath(path[1:]))
+        logger.info(f'Trying begin compress file {full_path}')
         result, media_type, arch_name = archive_file(compression_type, full_path)
         return result, media_type, arch_name
 

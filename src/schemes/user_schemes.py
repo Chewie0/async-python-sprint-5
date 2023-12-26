@@ -1,8 +1,6 @@
 from datetime import datetime as dt
-from typing import List
 from uuid import UUID
 from pydantic import BaseModel, validator
-from src.core import settings
 
 
 class User(BaseModel):
