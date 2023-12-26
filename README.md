@@ -158,7 +158,7 @@
 
     **Path parameters**
     ```
-    /?path=[<path-to-file>||<file-meta-id>||<path-to-folder>||<folder-meta-id>] & compression"=[zip||tar||7z]
+    /?path=[<path-to-file>||<file-meta-id>||<path-to-folder> & compression"=[zip||tar||7z]
     ```
     </details>
 
