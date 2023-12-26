@@ -4,6 +4,8 @@ import io
 import tarfile
 import zipfile
 from os.path import basename
+from uuid import UUID
+
 import py7zr
 from datetime import datetime, timedelta
 from typing import Callable
@@ -48,10 +50,14 @@ def add_to_arch(write_to_arch: Callable, full_path: str) -> None:
         write_to_arch(full_path, basename(full_path))
     else:
         logger.info(f'Add to archive folder {full_path}')
-        for dirpath, dirnames, filenames in os.walk(full_path):
-            for filename in filenames:
-                filepath = os.path.join(settings.files_folder_name, dirpath.split(settings.files_folder_name)[1][1:], filename)
-                write_to_arch(filepath)
+        try:
+            for dirpath, dirnames, filenames in os.walk(full_path):
+                for filename in filenames:
+                    filepath = os.path.join(dirpath, filename)
+                    logger.info(f'Add to archive {filepath}')
+                    write_to_arch(filepath)
+        except FileNotFoundError:
+            logger.error(f'Error add to arch file not found')
 
 
 def archive_file(compress_type: str, full_path: str) -> tuple[io.BytesIO, str, str]:
@@ -74,3 +80,11 @@ def archive_file(compress_type: str, full_path: str) -> tuple[io.BytesIO, str, s
                 add_to_arch(write_to_arch=seven_zip.write, full_path=full_path)
             app_type = 'application/x-7z-compressed'
     return arch_buffer, app_type, arch_name
+
+
+def is_valid_uuid(uuid_to_test, version=4):
+    try:
+        uuid_obj = UUID(uuid_to_test, version=version)
+    except ValueError:
+        return False
+    return str(uuid_obj) == uuid_to_test

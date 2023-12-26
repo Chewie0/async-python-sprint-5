@@ -4,4 +4,4 @@ COPY . /code
 
 WORKDIR /code
 
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+RUN pip install --no-cache-dir -r /code/requirements.txt

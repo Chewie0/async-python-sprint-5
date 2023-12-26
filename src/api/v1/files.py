@@ -9,6 +9,7 @@ from src.core.logger import logger
 from src.db.db import get_session
 from src.schemes import user_schemes, file_schemes
 from src.services.base import user_service, file_service
+from src.utils.tools import is_valid_uuid
 
 files_router = APIRouter()
 security = HTTPBearer()
@@ -46,10 +47,10 @@ async def download_file(*, db: AsyncSession = Depends(get_session),
                         compression: Optional[str] = Query(default=None,
                                                            description='Optional. Compression type: zip, 7z, tar'),
                         ):
-    if not path.startswith('/'):
+    if not path.startswith('/') and not is_valid_uuid(path):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Path must starts with / .'
+            detail='Path must starts with or check uid.'
         )
     logger.info(f'Download obj {path}')
     if compression:

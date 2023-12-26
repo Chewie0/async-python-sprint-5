@@ -2,10 +2,12 @@ version: '3.8'
 
 services:
 
-  postgres-fastapi:
+  db:
     image: postgres:14.5
     expose:
       - ${POSTGRES_EXPOSE}
+    ports:
+      - ${POSTGRES_EXPOSE}:${POSTGRES_EXPOSE}
     restart: always
     env_file:
       - ./.env
@@ -21,10 +23,10 @@ services:
       - ./.env
     restart: always
     depends_on:
-      - postgres-fastapi
+      - db
 
   nginx:
-    image: nginx:1.19.3
+    image: nginx:stable-perl
     ports:
       - ${NGINX_PORT}:${NGINX_PORT}
     volumes:
